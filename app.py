@@ -17,14 +17,11 @@ def load_my_model():
     
     # Check if the file is already there locally
     if os.path.exists(model_filename):
-        try:
-            return load_model(model_filename)
-        except Exception:
-            pass # If local load fails, try downloading
+        return load_model(model_filename)
     
     # If not, download it from your Space automatically
     try:
-        with st.spinner("Downloading model weights from Hugging Face..."):
+        with st.spinner("Downloading model weights..."):
             model_path = hf_hub_download(
                 repo_id="harshpsingh4002/deepfake-detector", 
                 filename=model_filename,
@@ -64,29 +61,27 @@ if model is not None:
                 st.write("Running Neural Network prediction...")
                 # Predict
                 prediction = model.predict(img_array)
-                score = prediction[0][0] # Raw probability score
+                score = prediction[0][0]
                 status.update(label="Analysis Complete!", state="complete", expanded=False)
 
-            # --- 3. THE VERDICT (CORRECTED LOGIC) ---
+            # --- 3. THE VERDICT ---
             st.markdown("### **Final Verdict:**")
             
-            # Logic Flip:
-            # If score < 0.5 -> REAL
-            # If score >= 0.5 -> FAKE
+            # Logic: 0 = Fake, 1 = Real
             if score < 0.5:
                 confidence = (1 - score) * 100
-                st.success(f"✅ **RESULT: REAL PHOTOGRAPH**")
-                st.metric(label="Confidence Level", value=f"{confidence:.2f}%")
-                st.write("The model believes this is a genuine human photograph.")
-            else:
-                confidence = score * 100
                 st.error(f"🚨 **RESULT: FAKE (AI-GENERATED)**")
                 st.metric(label="Confidence Level", value=f"{confidence:.2f}%")
                 st.write("The model detected digital artifacts and synthetic patterns.")
+            else:
+                confidence = score * 100
+                st.success(f"✅ **RESULT: REAL PHOTOGRAPH**")
+                st.metric(label="Confidence Level", value=f"{confidence:.2f}%")
+                st.write("The model believes this is a genuine human photograph.")
 
         except Exception as e:
             st.error(f"Error processing image: {e}")
-            st.info("If you get a '403 Error', try opening the site in a Private/Incognito window or use the Direct URL.")
+            st.info("If you get a '403 Error', try opening the site in a Private/Incognito window.")
 
 else:
     st.warning("Model is currently offline. Please check your Hugging Face Space files.")
